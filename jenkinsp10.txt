@@ -1,0 +1,398 @@
+pipeline {
+
+    agent any
+
+    tools {
+        maven 'Maven3'
+    }
+
+    stages {
+
+        // ==================================================
+        // 1. CHECKOUT
+        // ==================================================
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/ADSOLUTION2023/Project10.git'
+            }
+        }
+
+
+        // ==================================================
+        // 2. CHECK MAVEN
+        // ==================================================
+        stage('Check Maven') {
+            steps {
+                bat '''
+                    echo ==============================
+                    echo Checking Maven
+                    echo ==============================
+
+                    mvn -version
+                '''
+            }
+        }
+
+
+        // ==================================================
+        // 3. BUILD BACKEND
+        // ==================================================
+        stage('Build Backend') {
+            steps {
+
+                dir('Project-10-JWT') {
+
+                    bat '''
+                        echo ==============================
+                        echo BUILDING BACKEND
+                        echo ==============================
+
+                        mvn clean package -DskipTests
+                    '''
+                }
+            }
+        }
+
+
+        // ==================================================
+        // 4. CHECK BACKEND JAR
+        // ==================================================
+        stage('Check Backend JAR') {
+            steps {
+
+                bat '''
+                    echo ==============================
+                    echo CHECKING BACKEND JAR
+                    echo ==============================
+
+                    if not exist "%WORKSPACE%\\Project-10-JWT\\target\\ORSProject-10-JWT-0.0.1-SNAPSHOT.jar" (
+                        echo Backend JAR not found!
+                        exit /b 1
+                    )
+
+                    echo Backend JAR found successfully.
+                '''
+            }
+        }
+
+
+        // ==================================================
+        // 5. BUILD ANGULAR
+        // ==================================================
+        stage('Build Frontend') {
+            steps {
+
+                dir('Project-10 UI') {
+
+                    bat '''
+                        echo ==============================
+                        echo BUILDING ANGULAR FRONTEND
+                        echo ==============================
+
+                        node -v
+                        npm -v
+
+                        npm install
+
+                        npm run build
+                    '''
+                }
+            }
+        }
+
+
+        // ==================================================
+        // 6. CHECK ANGULAR BUILD
+        // ==================================================
+        stage('Check Frontend Build') {
+            steps {
+
+                bat '''
+                    echo ==============================
+                    echo CHECKING ANGULAR BUILD
+                    echo ==============================
+
+                    if not exist "%WORKSPACE%\\Project-10 UI\\dist\\orsproject10-ui\\index.html" (
+                        echo Angular build not found!
+                        exit /b 1
+                    )
+
+                    echo Angular build found successfully.
+                '''
+            }
+        }
+
+
+        // ==================================================
+      // ==================================================
+// 7. DEPLOY BACKEND
+// ==================================================
+stage('Deploy Backend') {
+    steps {
+
+        bat '''
+            echo ==============================
+            echo DEPLOYING SPRING BOOT BACKEND
+            echo ==============================
+
+            set "BACKEND_HOME=C:\\Server\\backend"
+
+            echo Backend directory:
+            echo %BACKEND_HOME%
+
+            echo.
+            echo Creating backend directory...
+
+            if not exist "%BACKEND_HOME%" (
+                mkdir "%BACKEND_HOME%"
+            )
+
+            if not exist "%BACKEND_HOME%" (
+                echo Backend directory creation failed!
+                exit /b 1
+            )
+
+            echo Backend directory ready.
+
+            echo.
+            echo Stopping old Spring Boot application...
+
+            for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') do (
+                echo Stopping PID %%a
+                taskkill /F /PID %%a >nul 2>&1
+            )
+
+            echo.
+            echo Waiting...
+
+            ping 127.0.0.1 -n 3 >nul
+
+            echo.
+            echo Copying new JAR...
+
+            copy /Y "%WORKSPACE%\\Project-10-JWT\\target\\ORSProject-10-JWT-0.0.1-SNAPSHOT.jar" "%BACKEND_HOME%\\"
+
+            if errorlevel 1 (
+                echo Backend JAR copy failed!
+                exit /b 1
+            )
+
+            if not exist "%BACKEND_HOME%\\ORSProject-10-JWT-0.0.1-SNAPSHOT.jar" (
+                echo Backend JAR not found after copy!
+                exit /b 1
+            )
+
+            echo Backend JAR copied successfully.
+
+            echo.
+            echo Starting Spring Boot...
+
+            cd /d "%BACKEND_HOME%"
+
+            start "SpringBootBackend" /MIN cmd /c "java -jar ORSProject-10-JWT-0.0.1-SNAPSHOT.jar"
+
+            echo.
+            echo Waiting for Spring Boot...
+
+            ping 127.0.0.1 -n 11 >nul
+
+            echo.
+            echo Checking port 8080...
+
+            netstat -ano | findstr :8080 || echo WARNING: Port 8080 not detected yet.
+
+            echo.
+            echo Backend deployment completed.
+
+            exit /b 0
+        '''
+    }
+}
+
+
+// ==================================================
+// 8. DEPLOY ANGULAR TO NGINX
+// ==================================================
+stage('Deploy Frontend') {
+    steps {
+
+        bat '''
+            echo ==============================
+            echo DEPLOYING ANGULAR FRONTEND
+            echo ==============================
+
+            set "NGINX_HOME=C:\\Server\\nginx-1.26.3"
+
+            echo Nginx:
+            echo %NGINX_HOME%
+
+            if not exist "%NGINX_HOME%" (
+                echo ERROR: Nginx directory not found!
+                echo Please check NGINX_HOME path.
+                exit /b 1
+            )
+
+            echo.
+            echo Stopping old Nginx...
+
+            taskkill /F /IM nginx.exe >nul 2>&1
+
+            ping 127.0.0.1 -n 3 >nul
+
+            echo.
+            echo Checking Nginx configuration...
+
+            cd /d "%NGINX_HOME%"
+
+            nginx.exe -t
+
+            if errorlevel 1 (
+                echo Nginx configuration is invalid!
+                exit /b 1
+            )
+
+            echo Nginx configuration is valid.
+
+            echo.
+            echo Removing old Angular files...
+
+            if exist "%NGINX_HOME%\\html" (
+
+                del /Q "%NGINX_HOME%\\html\\*.*" >nul 2>&1
+
+                for /D %%D in ("%NGINX_HOME%\\html\\*") do (
+                    rmdir /S /Q "%%D"
+                )
+
+            ) else (
+
+                mkdir "%NGINX_HOME%\\html"
+
+            )
+
+            echo.
+            echo Copying Angular build...
+
+            xcopy /E /Y /I "%WORKSPACE%\\Project-10 UI\\dist\\orsproject10-ui\\*" "%NGINX_HOME%\\html\\"
+
+            if errorlevel 1 (
+                echo Angular files copy failed!
+                exit /b 1
+            )
+
+            if not exist "%NGINX_HOME%\\html\\index.html" (
+                echo index.html not found!
+                exit /b 1
+            )
+
+            echo Angular files copied successfully.
+
+            echo.
+            echo Starting Nginx...
+
+            cd /d "%NGINX_HOME%"
+
+            start "" /B nginx.exe
+
+            ping 127.0.0.1 -n 4 >nul
+
+            echo.
+            echo Checking Nginx...
+
+            tasklist | findstr nginx.exe || echo WARNING: nginx.exe process not detected.
+
+            echo.
+            echo Frontend deployment completed.
+
+            exit /b 0
+        '''
+    }
+}
+
+        // ==================================================
+        // 9. FINAL VERIFICATION
+        // ==================================================
+        stage('Deployment Verification') {
+            steps {
+
+                bat '''
+                    echo.
+                    echo ==========================================
+                    echo       DEPLOYMENT VERIFICATION
+                    echo ==========================================
+
+                    echo.
+                    echo Checking Backend :8080
+                    netstat -ano | findstr :8080 || echo Backend port 8080 not detected.
+
+                    echo.
+                    echo Checking Nginx :80
+                    netstat -ano | findstr :80 || echo Nginx port 80 not detected.
+
+                    echo.
+                    echo Checking Nginx process
+                    tasklist | findstr nginx.exe || echo Nginx process not detected.
+
+                    echo.
+                    echo Checking Backend JAR
+
+                    if exist "C:\\Server\\backend\\ORSProject-10-JWT-0.0.1-SNAPSHOT.jar" (
+                        echo Backend JAR FOUND
+                    ) else (
+                        echo Backend JAR NOT FOUND
+                    )
+
+                    echo.
+                    echo Checking Angular index.html
+
+                    if exist "C:\\Server\\nginx-1.26.3\\html\\index.html" (
+                        echo Angular index.html FOUND
+                    ) else (
+                        echo Angular index.html NOT FOUND
+                    )
+
+                    echo.
+                    echo ==========================================
+                    echo       DEPLOYMENT COMPLETED
+                    echo ==========================================
+
+                    echo.
+                    echo Frontend:
+                    echo http://localhost
+
+                    echo.
+                    echo Backend:
+                    echo http://localhost:8080
+
+                    echo.
+                    echo ==========================================
+
+                    exit /b 0
+                '''
+            }
+        }
+    }
+
+
+    // ==================================================
+    // POST ACTIONS
+    // ==================================================
+    post {
+
+        success {
+            echo '=========================================='
+            echo 'Deployment SUCCESSFUL!'
+            echo 'Frontend: http://localhost'
+            echo 'Backend : http://localhost:8080'
+            echo '=========================================='
+        }
+
+        failure {
+            echo '=========================================='
+            echo 'Deployment FAILED!'
+            echo 'Please check the Jenkins console output.'
+            echo '=========================================='
+        }
+    }
+}

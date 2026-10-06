@@ -1,0 +1,23 @@
+# Angular
+Project-10 UI/node_modules/
+Project-10 UI/dist/
+Project-10 UI/.angular/
+
+# Java / Maven
+Project-10-JWT/target/
+
+# IDE
+.classpath
+.project
+.settings/
+.vscode/
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Environment / secrets
+.env

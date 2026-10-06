@@ -1,0 +1,166 @@
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { UserComponent } from './user/user.component';
+import { RoleComponent } from './role/role.component';
+import { CollegeComponent } from './college/college.component';
+import { CourseComponent } from './course/course.component';
+import { SubjectComponent } from './subject/subject.component';
+import { FacultyComponent } from './faculty/faculty.component';
+import { MarksheetComponent } from './marksheet/marksheet.component';
+import { TimetableComponent } from './timetable/timetable.component';
+import { StudentComponent } from './student/student.component';
+import { CollegeListComponent } from './college/collegelist.component';
+import { CourseListComponent } from './course/courselist.component';
+import { FacultyListComponent } from './faculty/facultylist.component';
+import { MarksheetListComponent } from './marksheet/marksheetlist.component';
+import { RoleListComponent } from './role/rolelist.component';
+import { StudentListComponent } from './student/studentlist.component';
+import { SubjectListComponent } from './subject/subjectlist.component';
+import { TimetableListComponent } from './timetable/timetablelist.component';
+import { UserListComponent } from './user/userlist.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { LoginComponent } from './login/login.component';
+import { SignupComponent } from './login/signup.component';
+
+
+
+const routes: Routes = [
+  {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'Welcome'
+  },
+  {
+    path: 'user',
+    component: UserComponent
+  },
+
+  {
+    path: 'role',
+    component: RoleComponent
+  },
+  {
+    path: 'college',
+    component: CollegeComponent
+  },
+
+  {
+    path: 'college/:id',
+    component: CollegeComponent
+  },
+  
+  {
+    path: 'collegelist',
+    component: CollegeListComponent
+  },
+  {
+    path: 'course',
+    component: CourseComponent
+  },
+  {
+    path: 'subject',
+    component: SubjectComponent
+  },
+  {
+    path: 'faculty',
+    component: FacultyComponent
+  },
+  {
+    path: 'marksheet',
+    component: MarksheetComponent
+  },
+  {
+    path: 'timetable',
+    component: TimetableComponent
+  },
+  {
+    path: 'student',
+    component: StudentComponent
+  }, {
+    path: 'course/:id',
+    component: CourseComponent
+  },
+  {
+    path: 'courselist',
+    component: CourseListComponent
+  },
+  {
+    path: 'faculty/:id',
+    component: FacultyComponent
+  },
+  {
+    path: 'facultylist',
+    component: FacultyListComponent
+  },
+  {
+    path: 'marksheet/:id',
+    component: MarksheetComponent
+  },
+  {
+    path: 'marksheetlist',
+    component: MarksheetListComponent
+  },
+  {
+    path: 'role/:id',
+    component: RoleComponent
+  },
+  {
+    path: 'rolelist',
+    component: RoleListComponent
+  },
+  {
+    path: 'student/:id',
+    component: StudentComponent
+  },
+  {
+    path: 'studentlist',
+    component: StudentListComponent
+  },
+  {
+    path: 'subject/:id',
+    component: SubjectComponent
+  },
+  {
+    path: 'subjectlist',
+    component: SubjectListComponent
+  },
+  {
+    path: 'timetable/:id',
+    component: TimetableComponent
+  },
+  {
+    path: 'timetablelist',
+    component: TimetableListComponent
+  },
+  {
+    path: 'user/:id',
+    component: UserComponent
+  },
+  {
+    path: 'userlist',
+    component: UserListComponent
+  },
+  {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'dashboard'
+  },
+  {
+    path: 'dashboard',
+    component: DashboardComponent
+  },
+  {
+    path: 'login',
+    component: LoginComponent
+  },
+  {
+    path: 'signup',
+    component: SignupComponent
+  }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
